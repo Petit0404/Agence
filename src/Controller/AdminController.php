@@ -1,0 +1,300 @@
+<?php
+
+namespace App\Controller;
+
+use App\Entity\Agent;
+use App\Entity\Contact;
+use App\Entity\Hideout;
+use App\Entity\Mission;
+use App\Entity\Speciality;
+use App\Entity\Target;
+use App\Form\ContactType;
+use App\Form\HideoutType;
+use App\Form\SpecialityType;
+use App\Form\TargetType;
+use DateTime;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Annotation\Route;
+
+class AdminController extends AbstractController
+{
+    #[Route('Agence/admin', name: 'admin')]
+    public function index(): Response
+    {
+
+        if(!session_id())
+        {
+            session_start();
+            session_regenerate_id();
+        }
+
+        if(isset($_SESSION['admin']) && $_SESSION['admin'] === 'ok')
+        {
+            return $this->render('admin/index.html.twig', [
+                'controller_name' => 'AdminController',
+            ]);
+        }
+
+
+        if($_POST)
+        {
+            if($_POST["email"] === "ybruel@ymail.com")
+            {
+                if($_POST["password"] === "admin")
+                {
+
+
+                    $_SESSION['admin'] = 'ok';
+
+
+
+                    return $this->render('admin/index.html.twig', [
+                        'controller_name' => 'AdminController',
+                    ]);
+                }
+            }
+        }
+
+
+        return $this->render('admin/login.html.twig', [
+            'controller_name' => 'AdminController',
+        ]);
+    }
+
+    #[Route('Agence/admin/speciality', name: 'admin_speciality')]
+    public function newSpeciality(Request $request): Response
+    {
+
+        $speciality = new Speciality();
+
+        $form = $this->createForm(SpecialityType::class,$speciality);
+
+        $form->handleRequest($request);
+        if ($form->isSubmitted() && $form->isValid()) {
+
+            $speciality = $form->getData();
+
+            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager->persist($speciality);
+            $entityManager->flush();
+
+            return $this->redirectToRoute('admin');
+        }
+
+        return $this->render('admin/speciality.html.twig', [
+            'controller_name' => 'AdminController',
+            'entity' => 'spécialité',
+            'form' => $form->createView(),
+        ]);
+    }
+
+    #[Route('Agence/admin/agent', name: 'admin_agent')]
+    public function newAgent(Request $request): Response
+    {
+
+        if(isset($_POST['agent']))
+        {
+            $agentD = $_POST['agent'];
+            $agent = new Agent();
+
+            $agent->setIdentificationCode($agentD['identificationCode']);
+            $agent->setName($agentD['name']);
+            $agent->setFirstName($agentD['firstName']);
+
+            $bd = $agentD['birthdate']['year'].'-'.$agentD['birthdate']['month'].'-'.$agentD['birthdate']['day'];
+            $birthdate = DateTime::createFromFormat('Y-m-d', $bd);
+            $agent->setBirthdate($birthdate);
+
+            $agent->setNationality($agentD['nationality']);
+
+            foreach ($agentD['speciality'] as $sp)
+            {
+                $agent->addSpeciality($this->getDoctrine()->getRepository(Speciality::class)->find((int)$sp));
+            }
+
+
+            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager->persist($agent);
+            $entityManager->flush();
+
+            return $this->redirectToRoute('admin');
+        }
+
+        $specialitys = $this->getDoctrine()->getRepository(Speciality::class)->findAll();
+
+
+        return $this->render('admin/agent.html.twig', [
+            'controller_name' => 'AdminController',
+            'entity' => 'agent',
+            'specialitys' => $specialitys,
+
+        ]);
+    }
+
+    #[Route('Agence/admin/contact', name: 'admin_contact')]
+    public function newContact(Request $request): Response
+    {
+
+        $contact = new Contact();
+
+        $form = $this->createForm(ContactType::class,$contact);
+
+        $form->handleRequest($request);
+        if ($form->isSubmitted() && $form->isValid()) {
+
+            $contact = $form->getData();
+
+            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager->persist($contact);
+            $entityManager->flush();
+
+            return $this->redirectToRoute('admin');
+        }
+
+        return $this->render('admin/speciality.html.twig', [
+            'controller_name' => 'AdminController',
+            'entity' => 'contact',
+            'form' => $form->createView(),
+
+        ]);
+    }
+
+    #[Route('Agence/admin/target', name: 'admin_target')]
+    public function newTarget(Request $request): Response
+    {
+
+        $target = new Target();
+
+        $form = $this->createForm(TargetType::class,$target);
+
+        $form->handleRequest($request);
+        if ($form->isSubmitted() && $form->isValid()) {
+
+            $target = $form->getData();
+
+            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager->persist($target);
+            $entityManager->flush();
+
+            return $this->redirectToRoute('admin');
+        }
+
+        return $this->render('admin/speciality.html.twig', [
+            'controller_name' => 'AdminController',
+            'entity' => 'cible',
+            'form' => $form->createView(),
+
+        ]);
+    }
+
+    #[Route('Agence/admin/hideout', name: 'admin_hideout')]
+    public function newHideout(Request $request): Response
+    {
+
+        $hideout = new Hideout();
+
+        $form = $this->createForm(HideoutType::class,$hideout);
+
+        $form->handleRequest($request);
+        if ($form->isSubmitted() && $form->isValid()) {
+
+            $hideout = $form->getData();
+
+            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager->persist($hideout);
+            $entityManager->flush();
+
+            return $this->redirectToRoute('admin');
+        }
+
+        return $this->render('admin/speciality.html.twig', [
+            'controller_name' => 'AdminController',
+            'entity' => 'planque',
+            'form' => $form->createView(),
+
+        ]);
+    }
+
+    #[Route('Agence/admin/mission', name: 'admin_mission')]
+    public function newMission(Request $request): Response
+    {
+
+        if(isset($_POST['mission']))
+        {
+            $missionD = $_POST['mission'];
+
+            $mission = new Mission();
+
+            $mission->setTitle($missionD['title']);
+            $mission->setDescription($missionD['description']);
+            $mission->setCodename($missionD['codename']);
+            $mission->setStatut($missionD['statut']);
+            $mission->setType($missionD['type']);
+
+
+            $dateTemp = DateTime::createFromFormat('Y-m-d', $missionD['dateStart']);
+            $mission->setDateStart($dateTemp);
+            $dateTemp = DateTime::createFromFormat('Y-m-d', $missionD['dateEnd']);
+            $mission->setDateEnd($dateTemp);
+
+            $mission->setCountry($missionD['country']);
+
+            if(isset($missionD['agent']))
+            {
+                foreach ($missionD['agent'] as $temp) {
+                    $mission->addAgent($this->getDoctrine()->getRepository(Agent::class)->find((int)$temp));
+                }
+            }
+
+            $mission->setRequireSpeciality($this->getDoctrine()->getRepository(Speciality::class)->find($missionD['requireSpeciality']));
+
+            if(isset($missionD['hideout']))            {
+                foreach ($missionD['hideout'] as $temp)
+                {
+                    $mission->addHideout($this->getDoctrine()->getRepository(Hideout::class)->find((int)$temp));
+                }
+            }
+            if(isset($missionD['contact'])) {
+                foreach ($missionD['contact'] as $temp) {
+                    $mission->addContact($this->getDoctrine()->getRepository(Contact::class)->find((int)$temp));
+                }
+            }
+            if(isset($missionD['target'])) {
+                foreach ($missionD['target'] as $temp) {
+                    $mission->addTarget($this->getDoctrine()->getRepository(Target::class)->find((int)$temp));
+                }
+            }
+
+            $entityManager = $this->getDoctrine()->getManager();
+            $entityManager->persist($mission);
+            $entityManager->flush();
+
+            return $this->redirectToRoute('admin');
+        }
+
+
+        $agents = $this->getDoctrine()->getRepository(Agent::class)->findAll();
+        $specialitys = $this->getDoctrine()->getRepository(Speciality::class)->findAll();
+        $contacts = $this->getDoctrine()->getRepository(Contact::class)->findAll();
+        $hideouts = $this->getDoctrine()->getRepository(Hideout::class)->findAll();
+        $targets = $this->getDoctrine()->getRepository(Target::class)->findAll();
+
+
+        return $this->render('admin/mission.html.twig', [
+            'controller_name' => 'AdminController',
+            'entity' => 'mission',
+            'agents' => $agents,
+            'specialitys' => $specialitys,
+            'contacts' => $contacts,
+            'hideouts' => $hideouts,
+            'targets' => $targets,
+        ]);
+    }
+
+
+
+
+
+}
